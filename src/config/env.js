@@ -8,7 +8,10 @@ const requiredVars = [
   'FIREBASE_PRIVATE_KEY',
   'FIREBASE_WEB_API_KEY',
   'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET'
+  'JWT_REFRESH_SECRET',
+  'RAZORPAY_KEY_ID',
+  'RAZORPAY_KEY_SECRET',
+  'RAZORPAY_WEBHOOK_SECRET'
 ];
 
 for (const variable of requiredVars) {
@@ -28,6 +31,10 @@ export const env = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
   jwtAccessTtl: process.env.JWT_ACCESS_TTL || '15m',
   jwtRefreshTtl: process.env.JWT_REFRESH_TTL || '30d',
+  razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
+  razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET,
+  razorpayCurrency: process.env.RAZORPAY_CURRENCY || 'INR',
   platformFee: Number(process.env.PLATFORM_FEE || 25),
   defaultSurgeMultiplier: Number(process.env.DEFAULT_SURGE_MULTIPLIER || 1),
   driverMatchRadiusKm: Number(process.env.DRIVER_MATCH_RADIUS_KM || 15)

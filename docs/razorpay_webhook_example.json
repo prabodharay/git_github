@@ -1,0 +1,15 @@
+{
+  "event": "payment.captured",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_29QQoUBi66xm2f",
+        "order_id": "order_9A33XWu170gUtm",
+        "amount": 50000,
+        "currency": "INR",
+        "status": "captured",
+        "method": "upi"
+      }
+    }
+  }
+}

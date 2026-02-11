@@ -5,6 +5,7 @@ import pricingRoutes from './pricing.routes.js';
 import customerRoutes from './customer/routes.js';
 import driverRoutes from './driver/routes.js';
 import adminRoutes from './admin/routes.js';
+import paymentRoutes from './payment.routes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/pricing', pricingRoutes);
 router.use('/customer', customerRoutes);
 router.use('/driver', driverRoutes);
 router.use('/admin', adminRoutes);
+router.use('/payments', paymentRoutes);
 
 export default router;

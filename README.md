@@ -263,3 +263,36 @@ flutter run
 - `lib/screens/booking_list_screen.dart`
 - `lib/screens/driver_dashboard_screen.dart`
 - `lib/screens/customer_home_screen.dart`
+
+## Razorpay UPI Payment Integration (Node.js)
+
+Backend payment APIs are available under `/api/v1/payments`.
+
+### Endpoints
+
+- `POST /api/v1/payments/orders` (customer auth required)
+  - Request: `{ "bookingId": "<bookingId>" }`
+  - Creates Razorpay order using booking fare.
+
+- `POST /api/v1/payments/webhook/razorpay`
+  - Verifies `x-razorpay-signature`
+  - Handles `payment.captured`
+  - Updates booking `paymentStatus`
+  - Credits driver wallet
+  - Creates transaction record
+  - Sends booking payment notification
+
+### Environment Config Example
+
+```env
+RAZORPAY_KEY_ID=rzp_test_xxxxx
+RAZORPAY_KEY_SECRET=your-razorpay-secret
+RAZORPAY_WEBHOOK_SECRET=your-webhook-secret
+RAZORPAY_CURRENCY=INR
+```
+
+### Razorpay Webhook Setup
+
+- URL: `https://<your-domain>/api/v1/payments/webhook/razorpay`
+- Events: `payment.captured`
+- Signing secret should match `RAZORPAY_WEBHOOK_SECRET`
