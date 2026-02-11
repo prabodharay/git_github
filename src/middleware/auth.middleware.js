@@ -1,5 +1,6 @@
-import { AuthService } from '../services/auth.service.js';
 import { UserModel } from '../models/user.model.js';
+import { SessionModel } from '../models/session.model.js';
+import { verifyAccessToken } from '../utils/jwt.js';
 import { sendError } from '../utils/http.js';
 
 export const authenticate = async (req, res, next) => {
@@ -10,8 +11,18 @@ export const authenticate = async (req, res, next) => {
       return sendError(res, 'Missing bearer token', 401);
     }
 
-    const idToken = authHeader.replace('Bearer ', '').trim();
-    const decoded = await AuthService.verifyFirebaseToken(idToken);
+    const token = authHeader.replace('Bearer ', '').trim();
+    const decoded = verifyAccessToken(token);
+
+    if (decoded.type !== 'access') {
+      return sendError(res, 'Invalid token type', 401);
+    }
+
+    const sessionSnapshot = await SessionModel.findById(decoded.sessionId);
+    if (!sessionSnapshot.exists || sessionSnapshot.data().status !== 'active') {
+      return sendError(res, 'Session expired or revoked', 401);
+    }
+
     const userSnapshot = await UserModel.findById(decoded.uid);
 
     if (!userSnapshot.exists) {
@@ -20,8 +31,8 @@ export const authenticate = async (req, res, next) => {
 
     req.auth = {
       uid: decoded.uid,
-      phoneNumber: decoded.phone_number,
-      role: userSnapshot.data().role,
+      role: decoded.role,
+      sessionId: decoded.sessionId,
       profile: userSnapshot.data()
     };
 

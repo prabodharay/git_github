@@ -1,18 +1,15 @@
 # LoadEx Backend (Firebase + Express.js)
 
-Complete mobile backend project scaffold for LoadEx logistics app with:
+Production-ready backend scaffold for **Firebase Phone OTP authentication** and logistics operations.
 
-- Firebase Phone OTP authentication flow (token verification)
-- Firestore models for users, bookings, drivers, pricing rules, wallets
-- REST APIs for login, fare calculation, booking creation, and driver assignment flow
-- Role-based routing for customer, driver, admin
-- Environment-based configuration
+## Features
 
-## Tech Stack
-
-- Node.js + Express
-- Firebase Admin SDK (Auth + Firestore)
-- Firestore as primary database
+- Signup with phone number (Firebase OTP send)
+- OTP verification with Firebase Identity Toolkit
+- Auto-create/update `users/{uid}` document in Firestore with role
+- Issue secure JWT access + refresh tokens
+- Session security with revocable server-side `sessions` collection
+- Role-based routing for customer / driver / admin APIs
 
 ## Project Structure
 
@@ -37,6 +34,7 @@ Complete mobile backend project scaffold for LoadEx logistics app with:
     │   ├── booking.model.js
     │   ├── driver.model.js
     │   ├── pricing.model.js
+    │   ├── session.model.js
     │   ├── user.model.js
     │   └── wallet.model.js
     ├── routes/
@@ -57,126 +55,95 @@ Complete mobile backend project scaffold for LoadEx logistics app with:
     │   └── fare.service.js
     └── utils/
         ├── geo.js
-        └── http.js
+        ├── http.js
+        └── jwt.js
 ```
 
-## Setup
+## Environment
 
-1. Install dependencies
+Copy `.env.example` to `.env` and set:
 
-```bash
-npm install
-```
-
-2. Copy env and fill values
-
-```bash
-cp .env.example .env
-```
-
-3. Run in dev mode
-
-```bash
-npm run dev
-```
-
-## Environment Variables
-
-See `.env.example`:
-
-- `PORT`
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
-- `PLATFORM_FEE`
-- `DEFAULT_SURGE_MULTIPLIER`
-- `DRIVER_MATCH_RADIUS_KM`
+- `FIREBASE_WEB_API_KEY`
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+- `JWT_ACCESS_TTL` (default `15m`)
+- `JWT_REFRESH_TTL` (default `30d`)
 
-## Firestore Collections (Data Models)
+## Phone OTP Auth Flow
 
-- `users/{uid}`
-  - `role`: customer | driver | admin
-  - `phone`
-  - `status`
-  - `createdAt`, `updatedAt`
+### 1) Signup Phone (send OTP)
 
+`POST /api/v1/auth/signup-phone`
+
+```json
+{
+  "phoneNumber": "+919999999999",
+  "recaptchaToken": "recaptcha-or-app-attest-token",
+  "role": "customer"
+}
+```
+
+Response contains `sessionInfo`.
+
+### 2) Verify OTP
+
+`POST /api/v1/auth/verify-otp`
+
+```json
+{
+  "sessionInfo": "from-signup-response",
+  "otpCode": "123456",
+  "role": "customer"
+}
+```
+
+Response:
+
+- creates/updates Firestore `users/{uid}`
+- creates secure server-side session document
+- returns `accessToken` + `refreshToken`
+
+### 3) Refresh Access Token
+
+`POST /api/v1/auth/refresh-token`
+
+```json
+{ "refreshToken": "..." }
+```
+
+### 4) Logout (revoke session)
+
+`POST /api/v1/auth/logout`
+
+Header:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+## Firestore Collections
+
+- `users/{uid}`: profile + role + status
+- `sessions/{sessionId}`: active/revoked login sessions
 - `drivers/{driverId}`
-  - `name`
-  - `vehicleType`
-  - `status`: approved/rejected/suspended
-  - `availability`: available/busy
-  - `location`: `{ lat, lng }`
-
 - `bookings/{bookingId}`
-  - `customerId`, `driverId`
-  - `pickupLocation`, `dropLocation`
-  - `distanceKm`, `vehicleType`
-  - `fare`, `status`
-  - `loadDescription`, `loadPhotos`
-
 - `pricing_rules/{vehicleType}`
-  - `baseFare`
-  - `perKmRate`
-  - `surgeMultiplier`
-
 - `wallets/{driverId}`
-  - `balance`
-  - `totalEarnings`
 
-## API Endpoints
+## Secure Sessions
 
-Base URL: `/api/v1`
+- Access token is short-lived JWT (`JWT_ACCESS_TTL`)
+- Refresh token is long-lived JWT (`JWT_REFRESH_TTL`)
+- Every token includes `sessionId`
+- Middleware checks session state in Firestore
+- Logout revokes session server-side
 
-### Authentication
+## Run
 
-- `POST /auth/login`
-  - Body: `{ "idToken": "<firebase-id-token>", "role": "customer|driver|admin" }`
-  - Verifies Firebase token from Phone OTP flow and creates/updates user profile.
-
-### Pricing / Fare
-
-- `POST /pricing/fare/calculate` (authenticated)
-  - Body: `{ "vehicleType": "mini_truck", "distanceKm": 12.5 }`
-
-- `POST /pricing/pricing/:vehicleType` (admin)
-  - Body: `{ "baseFare": 100, "perKmRate": 18, "surgeMultiplier": 1.2 }`
-
-### Booking
-
-- `POST /bookings` (customer)
-  - Body:
-    ```json
-    {
-      "pickupLocation": { "lat": 19.1, "lng": 72.9 },
-      "dropLocation": { "lat": 19.2, "lng": 73.0 },
-      "distanceKm": 14,
-      "vehicleType": "mini_truck",
-      "loadDescription": "Furniture",
-      "loadPhotos": []
-    }
-    ```
-  - Automatically calculates fare and tries nearest driver assignment.
-
-- `GET /bookings/:bookingId` (customer/driver/admin with access)
-
-### Driver Routes
-
-- `PATCH /driver/bookings/:bookingId/status` (driver)
-  - Body: `{ "status": "arrived|started|completed|cancelled|accepted" }`
-
-### Admin Routes
-
-- `PATCH /admin/drivers/:driverId/approval` (admin)
-  - Body: `{ "status": "approved|rejected|suspended" }`
-
-## Role-Based Routing
-
-- Customer-only routes under `/customer` and booking creation restrictions.
-- Driver-only routes under `/driver`.
-- Admin-only routes under `/admin` and pricing update endpoint.
-
-## Notes for Mobile Integration
-
-- Phone OTP sending/verification is handled by Firebase client SDK in mobile app.
-- Backend receives Firebase ID token and verifies it with Admin SDK.
-- Use `Authorization: Bearer <idToken>` for protected APIs.
+```bash
+npm install
+npm run dev
+```
