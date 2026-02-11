@@ -209,3 +209,30 @@ Features:
 - returns detailed total fare breakdown (`baseFare`, `platformFee`, slab charges, surge, total)
 
 See `functions/README.md` for request/response and deployment steps.
+
+## React Mobile-Friendly Frontend (Material UI)
+
+A mobile-first React frontend is included in `frontend/` with:
+- Phone OTP login flow
+- Customer booking screen
+- Booking history
+- Driver dashboard
+- Admin pricing management
+- API integration with backend REST endpoints via Axios
+
+### Frontend Setup
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+### Frontend Routes
+
+- `/login`
+- `/customer/book`
+- `/customer/history`
+- `/driver/dashboard`
+- `/admin/pricing`
