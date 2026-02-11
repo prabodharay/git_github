@@ -236,3 +236,30 @@ npm run dev
 - `/customer/history`
 - `/driver/dashboard`
 - `/admin/pricing`
+
+## Flutter UI Screens (Firebase + REST)
+
+A Flutter app scaffold is included in `flutter_app/` with screens for:
+- Login with phone auth (OTP send + verify against backend)
+- Booking form (pickup, drop, vehicle selection)
+- Fare preview (via pricing fare API)
+- Booking list/history
+- Driver dashboard (status updates)
+
+### Flutter Setup
+
+```bash
+cd flutter_app
+flutter pub get
+flutter run
+```
+
+### Main Flutter Files
+
+- `lib/main.dart`
+- `lib/services/api_service.dart`
+- `lib/screens/login_screen.dart`
+- `lib/screens/customer_booking_screen.dart`
+- `lib/screens/booking_list_screen.dart`
+- `lib/screens/driver_dashboard_screen.dart`
+- `lib/screens/customer_home_screen.dart`
