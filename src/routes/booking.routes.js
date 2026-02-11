@@ -9,24 +9,73 @@ const router = Router();
 
 router.post('/', authenticate, authorizeRoles('customer'), async (req, res) => {
   try {
-    const payload = req.body;
-
-    if (!payload.pickupLocation || !payload.dropLocation || !payload.vehicleType) {
-      return sendError(
-        res,
-        'pickupLocation, dropLocation and vehicleType are required',
-        400
-      );
-    }
-
     const booking = await BookingService.createBooking({
       customerId: req.auth.uid,
-      payload
+      payload: req.body
     });
 
     return sendSuccess(res, booking, 201);
   } catch (error) {
     return sendError(res, 'Booking creation failed', 400, error.message);
+  }
+});
+
+router.post(
+  '/:bookingId/assign-driver',
+  authenticate,
+  authorizeRoles('admin'),
+  async (req, res) => {
+    try {
+      const result = await BookingService.assignDriver(req.params.bookingId);
+      return sendSuccess(res, result);
+    } catch (error) {
+      return sendError(res, 'Driver assignment failed', 400, error.message);
+    }
+  }
+);
+
+router.patch('/:bookingId/status', authenticate, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const result = await BookingService.updateBookingStatus({
+      bookingId: req.params.bookingId,
+      status,
+      actorRole: req.auth.role,
+      actorId: req.auth.uid
+    });
+
+    return sendSuccess(res, result);
+  } catch (error) {
+    return sendError(res, 'Booking status update failed', 400, error.message);
+  }
+});
+
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const limit = Number(req.query.limit || 25);
+    const bookings = await BookingService.listBookings({
+      role: req.auth.role,
+      uid: req.auth.uid,
+      limit
+    });
+
+    return sendSuccess(res, {
+      count: bookings.length,
+      bookings
+    });
+  } catch (error) {
+    return sendError(res, 'Failed to list bookings', 500, error.message);
+  }
+});
+
+router.get('/:bookingId/status', authenticate, async (req, res) => {
+  try {
+    const status = await BookingService.getBookingStatus(req.params.bookingId);
+
+    return sendSuccess(res, status);
+  } catch (error) {
+    return sendError(res, 'Failed to fetch booking status', 404, error.message);
   }
 });
 

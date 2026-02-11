@@ -172,3 +172,28 @@ npm run dev
 - `PricingModel.upsert()` validates against `pricing_rules` schema.
 - `WalletModel.credit()` validates the computed wallet document.
 - `TransactionModel.create()` validates transaction payload and supports list by driver.
+
+
+### Booking Management APIs
+
+- `POST /api/v1/bookings` (customer)
+  - Creates booking with pickup, drop, vehicle type.
+  - Auto-calculates fare from `pricing_rules`.
+  - Auto-assigns nearest available driver.
+  - Returns booking + fare breakdown + assignment details.
+
+- `POST /api/v1/bookings/:bookingId/assign-driver` (admin)
+  - Tries assignment for pending bookings.
+
+- `PATCH /api/v1/bookings/:bookingId/status` (customer/driver/admin)
+  - Updates booking status.
+  - Customer is restricted to cancellation.
+
+- `GET /api/v1/bookings/:bookingId/status` (authenticated)
+  - Returns booking status payload.
+
+- `GET /api/v1/bookings` (authenticated)
+  - Returns bookings list by role:
+    - customer: own bookings
+    - driver: assigned bookings
+    - admin: all bookings
