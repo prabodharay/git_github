@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { authorizeRoles } from '../middleware/role.middleware.js';
 import { FareService } from '../services/fare.service.js';
+import { PricingModel } from '../models/pricing.model.js';
 import { sendError, sendSuccess } from '../utils/http.js';
 
 const router = Router();
@@ -28,7 +29,6 @@ router.post(
   async (req, res) => {
     try {
       const { vehicleType } = req.params;
-      const { db } = await import('../config/firebase.js');
       const payload = {
         baseFare: Number(req.body.baseFare),
         perKmRate: Number(req.body.perKmRate),
@@ -37,8 +37,8 @@ router.post(
         updatedBy: req.auth.uid
       };
 
-      await db.collection('pricing_rules').doc(vehicleType).set(payload, { merge: true });
-      return sendSuccess(res, { vehicleType, ...payload });
+      const updated = await PricingModel.upsert(vehicleType, payload);
+      return sendSuccess(res, { vehicleType: updated.id, ...updated.data() });
     } catch (error) {
       return sendError(res, 'Unable to update pricing rule', 400, error.message);
     }

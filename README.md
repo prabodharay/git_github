@@ -147,3 +147,28 @@ Authorization: Bearer <accessToken>
 npm install
 npm run dev
 ```
+
+## Firestore Schema Definitions, Validation, and Indexes
+
+- Runtime schema definitions: `src/schemas/firestore.schemas.js`
+- Validation helpers: `src/helpers/firestore-schema.helpers.js`
+- JSON schema output + sample documents: `docs/firestore_schema_output.json`
+- Firestore composite indexes: `firestore.indexes.json`
+
+### Included Collections
+
+- `users`
+- `drivers`
+- `bookings`
+- `pricing_rules`
+- `wallets`
+- `transactions`
+
+### Model-level Validation Coverage
+
+- `UserModel.upsert()` validates against `users` schema.
+- `DriverModel.update()` validates merged payload against `drivers` schema.
+- `BookingModel.create()/update()` validates against `bookings` schema.
+- `PricingModel.upsert()` validates against `pricing_rules` schema.
+- `WalletModel.credit()` validates the computed wallet document.
+- `TransactionModel.create()` validates transaction payload and supports list by driver.
