@@ -197,3 +197,15 @@ npm run dev
     - customer: own bookings
     - driver: assigned bookings
     - admin: all bookings
+
+## Firebase Cloud Function: Fare Calculation
+
+A deploy-ready Firebase HTTP function is included at `functions/index.js`.
+
+Features:
+- reads `pricing_rules/{vehicleType}` from Firestore
+- supports slab-based long distance fare via `distanceSlabs`
+- applies surge multiplier from request or default pricing rule
+- returns detailed total fare breakdown (`baseFare`, `platformFee`, slab charges, surge, total)
+
+See `functions/README.md` for request/response and deployment steps.
